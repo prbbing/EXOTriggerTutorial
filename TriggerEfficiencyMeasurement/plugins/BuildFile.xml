@@ -1,0 +1,19 @@
+<use  name="boost"/>
+<use  name="root"/>
+<use  name="rootrflx"/>
+<use  name="DataFormats/Common"/>
+<use  name="DataFormats/HLTReco"/>
+<use  name="FWCore/ServiceRegistry"/>
+<use  name="CommonTools/UtilAlgos"/>
+<use  name="CommonTools/Utils"/>
+<use  name="DataFormats/Math"/>
+<use  name="DataFormats/MuonReco"/>
+<use  name="DataFormats/PatCandidates"/>
+<use  name="DataFormats/RecoCandidate"/>
+<use  name="FWCore/Framework"/>
+<use  name="FWCore/ParameterSet"/>
+<use  name="FWCore/Utilities"/>
+<flags  CXXFLAGS="-gdwarf-2 -g3 -O0 -mtune=core2 -march=core2 -O3 -pipe"/>
+<library  file="TriggerEfficiencyAnalyzer.cc" name="EXOTriggerTutorialTriggerEfficiencyMeasurementPlugins">
+  <flags  EDM_PLUGIN="1"/>
+</library>
