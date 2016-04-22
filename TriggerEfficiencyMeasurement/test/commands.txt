@@ -1,1 +1,30 @@
-commands used in the efficiency section 
+cmsrel CMSSW_8_0_4
+cd CMSSW_8_0_4/src
+cmsenv
+rehash
+
+git cms-addpkg HLTrigger/Configuration
+git cms-merge-topic -u 13704
+git cms-merge-topic -u 13767
+git cms-merge-topic -u 13906
+git cms-merge-topic -u 14074
+git cms-merge-topic -u 14141
+git cms-merge-topic -u cms-tsg-storm:HLTinApril80X
+
+# get the latest externals for E/Gamma and Tau LUTs 
+git clone https://github.com/cms-data/L1Trigger-L1TCalorimeter
+L1Trigger/L1TCalorimeter/data
+
+git cms-checkdeps -A -a
+
+git clone git@github.com:prbbing/EXOTriggerTutorial
+
+scram b -j 4
+cmsenv
+rehash
+
+
+cmsDriver.py hlt -s DIGI,L1,DIGI2RAW,HLT:hltdev:/users/biliu/Tutorial2016/Example/V2 --processName HLT2 --mc --datatier GEN-SIM-DIGI-RAW-HLTDEBUG --eventcontent FEVTDEBUGHLT --era=Run2_2016 --geometry=Extended2016,Extended2016Reco --conditions=80X_mcRun2_asymptotic_ForTSGStudies_from2016EcalTune_30fb_v1 -n 100 --no_exec --python_filename hlt_Step1_Example.py
+
+cd EXOTriggerTutorial/TriggerEfficiencyMeasurement/test/
+cmsRun hlt_Step1_Example.py
