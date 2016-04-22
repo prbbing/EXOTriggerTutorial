@@ -7,8 +7,6 @@ using namespace edm;
 //An analyzer to get the hlt/reco turn on curves. wrt gen
 TriggerEfficiencyAnalyzer::TriggerEfficiencyAnalyzer (const edm::ParameterSet &cfg) :
   recoMuonLabel_ (consumes<vector<reco::Muon>>(cfg.getParameter<edm::InputTag> ("recoMuonLabel"))),
-  //recoCandidateLabel__ (consumes<vector<reco::RecoChargedCandidate>>(cfg.getParameter<edm::InputTag> ("recoCandidates"))),
-  triggerBitsLabel_(consumes<edm::TriggerResults>(cfg.getParameter<edm::InputTag>("triggerBitsLabel"))),
   triggerSummaryLabel_ (consumes<trigger::TriggerEvent>(cfg.getParameter<edm::InputTag> ("triggerSummaryLabel"))),
   //Get the inputTag of the filter from the config filter
   filterTag_ (cfg.getParameter<edm::InputTag> ("filterTag")),
@@ -34,15 +32,34 @@ TriggerEfficiencyAnalyzer::~TriggerEfficiencyAnalyzer ()
 void
 TriggerEfficiencyAnalyzer::analyze(const edm::Event &event, const edm::EventSetup &setup)
 {  
-  event.getByToken(triggerBitsLabel_, triggerBits);
-  ///////////////////////////////////////////////////////////////////////////
-  //The following block is to access the filter objects in this collection://   
-  //      trigger::TriggerEvent "hltTriggerSummaryAOD" "" "HLT"            //      
-  ///////////////////////////////////////////////////////////////////////////
-  event.getByToken(triggerSummaryLabel_, triggerSummary);
+  //Collect the trigger filter objects.
+  trigger::TriggerObjectCollection filterObjects = filterFinder(triggerSummaryLabel_, filterTag_, event);
+  
+  //Select reco muons to be considered, the denominator. 
+  vector<reco::Muon> selectedRecoMuon = recoMuonSelector(recoMuonLabel_, event);
+  
+  //Collect reco muons that can be matched to the trigger filters.
+  vector<reco::Muon> filterMatchedRecoMuon = recoMuonMatcher(filterObjects, selectedRecoMuon); 
+ 
+  //Fill the histograms.
+  for(uint j = 0; j < vanilaHistograms.size(); j++)
+    {
+      fillMuonHistogram(selectedRecoMuon, vanilaHistograms[j]);    
+      fillMuonHistogram(filterMatchedRecoMuon, filterMatchedHistograms[j]);
+      fillMuonHistogram(filterMatchedRecoMuon, filterEffHistograms[j]);
+    }
+  filterMatchedRecoMuon.clear();
+  selectedRecoMuon.clear();
+}
+
+//find the filters
+trigger::TriggerObjectCollection 
+TriggerEfficiencyAnalyzer::filterFinder(edm::EDGetTokenT<trigger::TriggerEvent> triggerSummaryLabel, edm::InputTag filterTag, const edm::Event &event)
+{
+  event.getByToken(triggerSummaryLabel, triggerSummary);
   trigger::TriggerObjectCollection allTriggerObjects = triggerSummary->getObjects(); 
   //filterTag_ is the inputTag of the filter you want to match
-  size_t filterIndex = (*triggerSummary).filterIndex(filterTag_);
+  size_t filterIndex = (*triggerSummary).filterIndex(filterTag);
   trigger::TriggerObjectCollection filterObjects;
   if(filterIndex < (*triggerSummary).sizeFilters())
     { 
@@ -53,31 +70,8 @@ TriggerEfficiencyAnalyzer::analyze(const edm::Event &event, const edm::EventSetu
           filterObjects.push_back(foundObject);
         }
     }
-  ///////////////////////////////////////////////////////////////////////////
-  //                     end of filling filterObjects                      // 
-  ///////////////////////////////////////////////////////////////////////////
-  
-  //Get the recoChargedCandidate collection
-  //event.getByToken(recoCandidateLabel_, recoCandidates);
-  
-  //Select reco muons to be considered, the denominator. 
-  vector<reco::Muon> selectedRecoMuon = recoMuonSelector(recoMuonLabel_, event);
-  
-  //Collect reco muons that can be matched to the trigger filters.
-  vector<reco::Muon> filterMatchedRecoMuon = recoMuonMatcher(filterObjects, selectedRecoMuon); 
- 
-  //Collect reco muons that can be matched to the hlt level reco objects. 
-  //vector<reco::Muon> recoCandMatchedRecoMuon = recoMuonMatcher(recoCandidates, selectedRecoMuon); 
-  
-  //Fill the histograms.
-  for(uint j = 0; j < vanilaHistograms.size(); j++)
-    {
-      fillMuonHistogram(selectedRecoMuon, vanilaHistograms[j]);    
-      fillMuonHistogram(filterMatchedRecoMuon, filterMatchedHistograms[j]);
-      fillMuonHistogram(filterMatchedRecoMuon, filterEffHistograms[j]);
-    }
-  filterMatchedRecoMuon.clear();
-  selectedRecoMuon.clear();
+  std::cout<<filterObjects.size()<<endl; 
+  return filterObjects;
 }
 
 //DeltaR match
@@ -118,7 +112,7 @@ TriggerEfficiencyAnalyzer::recoMuonSelector(edm::EDGetTokenT<vector<reco::Muon>>
     {
       for (reco::MuonCollection::const_iterator recoMuon = MuonCollection ->begin(); recoMuon != MuonCollection->end(); recoMuon++) 
         {
-          if(recoMuon->pt() > 10 && recoMuon->eta() < 2.1) 
+          if(recoMuon->pt() > 10 && abs(recoMuon->eta()) < 2.1) 
             selectedRecoMuon.push_back(*recoMuon);
         }  
     }
@@ -165,6 +159,7 @@ TriggerEfficiencyAnalyzer::endJob()
   //Get the efficiency histograms. Here is also the place to rebin the histograms if needed. Also one can use TEfficiency instead of histograms.
   for(uint m = 0; m < filterEffHistograms.size(); m++)
     {
+      filterEffHistograms[m]->Sumw2();
       filterEffHistograms[m]->Divide(filterEffHistograms[m], vanilaHistograms[m],1,1,"B"); 
     }
 }

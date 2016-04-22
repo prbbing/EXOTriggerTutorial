@@ -55,6 +55,7 @@ class TriggerEfficiencyAnalyzer : public edm::EDAnalyzer
       vector<reco::Muon> recoMuonMatcher(const trigger::TriggerObjectCollection Objects, vector<reco::Muon> recoMuonSet);
       void fillMuonHistogram(vector<reco::Muon> recoMuonSet, TH1D* histogram);
       vector<string> getStringSegments(string input, char delim);
+      trigger::TriggerObjectCollection filterFinder(edm::EDGetTokenT<trigger::TriggerEvent> triggerSummaryLabel, edm::InputTag filterTag, const edm::Event &event);
       double muonVariables(const reco::Muon muon, string variable);
       TriggerEfficiencyAnalyzer (const edm::ParameterSet &);
       ~TriggerEfficiencyAnalyzer();
@@ -63,10 +64,8 @@ class TriggerEfficiencyAnalyzer : public edm::EDAnalyzer
       edm::Service<TFileService> fs;
     private:
       edm::EDGetTokenT<vector<reco::Muon>> recoMuonLabel_;
-      edm::EDGetTokenT<edm::TriggerResults> triggerBitsLabel_;
       edm::EDGetTokenT<trigger::TriggerEvent> triggerSummaryLabel_;
       edm::InputTag filterTag_;
-      edm::Handle<edm::TriggerResults> triggerBits; 
       edm::Handle<trigger::TriggerEvent> triggerSummary; 
       vector<edm::ParameterSet> histograms_;
       vector<TH1D*> vanilaHistograms;
