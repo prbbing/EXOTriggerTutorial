@@ -1,1 +1,1 @@
-Configuration file for rates or timing calculations. 
+#Configuration file for rates or timing calculations. 
