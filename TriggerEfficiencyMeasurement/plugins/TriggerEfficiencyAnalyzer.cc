@@ -133,6 +133,7 @@ TriggerEfficiencyAnalyzer::recoMuonMatcher(const trigger::TriggerObjectCollectio
               if(match(recoMuonSet[j].eta(),recoMuonSet[j].phi(),Objects[i].eta(),Objects[i].phi()))
                 {
                   matchedRecoMuon.push_back(recoMuonSet[j]);
+                  break;
                 }
             }  
          }
